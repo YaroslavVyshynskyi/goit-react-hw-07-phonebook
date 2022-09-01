@@ -1,49 +1,40 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import * as api from '../api';
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-export const fetchContacts = createAsyncThunk('contacts/fetchAll', async () => {
-  const response = await api.getContacts();
-  return response.data;
+const API_URL = 'https://630b8866ed18e82516550e82.mockapi.io';
+
+export const contactsApi = createApi({
+  reducerPath: 'contactsApi',
+  baseQuery: fetchBaseQuery({
+    baseUrl: API_URL,
+  }),
+  tagTypes: ['Contacts'],
+  endpoints: builder => ({
+    fetchContacts: builder.query({
+      query: () => '/contacts',
+      providesTags: ['Contacts'],
+    }),
+
+    createContact: builder.mutation({
+      query: newContact => ({
+        url: '/contacts',
+        method: 'POST',
+        body: newContact,
+      }),
+      invalidatesTags: ['Contacts'],
+    }),
+
+    deleteContact: builder.mutation({
+      query: contactId => ({
+        url: `/contacts/${contactId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Contacts'],
+    }),
+  }),
 });
 
-export const contactsSlice = createSlice({
-  name: 'contacts',
-  initialState: {
-    items: [
-      //   { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      //   { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      //   { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      //   { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
-    status: 'idle',
-  },
-  reducers: {
-    // addContact(state, action) {
-    //   state.items.push(action.payload);
-    // },
-
-    deleteContact(state, action) {
-      state.items = state.items.filter(item => {
-        return item.id !== action.payload;
-      });
-    },
-
-    changeFilter(state, action) {
-      state.filter = action.payload;
-    },
-  },
-  extraReducers: builder => {
-    builder.addCase(fetchContacts.fulfilled, (state, action) => {
-      console.log(action.payload);
-      state.status = 'success';
-      state.items = [...state.items, ...action.payload];
-    });
-    builder.addCase(fetchContacts.pending, (state, action) => {
-      state.status = 'loading';
-    });
-  },
-});
-
-export const { addContact, deleteContact, changeFilter } =
-  contactsSlice.actions;
+export const {
+  useFetchContactsQuery,
+  useCreateContactMutation,
+  useDeleteContactMutation,
+} = contactsApi;
